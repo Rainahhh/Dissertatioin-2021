@@ -1,0 +1,104 @@
+set.seed(12345)
+library(readr)
+library(forecast)
+library(MASS)
+rawdata <- read_csv("rawdata.csv")
+rawdata <- as.data.frame(rawdata)
+
+traindata <- rawdata[c(1:15), ]
+testdata <- rawdata[c(16:18), ]
+
+summary(traindata)
+
+plot(traindata$Year, traindata$GDP, 
+     type = "b", lty = 3, pch = 17,
+     xlab = "Year", ylab = "GDP")
+     
+
+library(corrplot)
+M <- cor(traindata[, -c(1,2)])
+corrplot.mixed(M)
+
+MM <- cor(traindata[, -c(1,2,5,10,11,17)])
+corrplot.mixed(MM)
+
+sdata <- as.data.frame(scale(traindata, T, T))
+newdata <- sdata[, -c(1, 5, 10, 11, 17)]                
+fit1 <- lm(GDP ~., data = newdata)
+stepfit <- stepAIC(fit1, direction = "backward")
+summary(stepfit)
+predata <- as.data.frame(scale(testdata[, c(3, 4, 6, 8, 9, 14, 16, 18, 19)], T, T))
+steppre <- predict(stepfit, predata)
+steppre
+
+
+
+tsdata <- read_csv("rawdata.csv")[c(1:15), c(1,2)]
+gdpts <- ts(tsdata[,2], start = c(2001), end = c(2015), frequency = 1)
+plot(gdpts, ylab = "GDP")
+
+
+fit2 <- ets(gdpts, model = "ANN")
+fit2
+pred2 <- forecast(fit2, 3)
+pred2
+
+fit3 <- ets(gdpts, model = "AAN")
+fit3
+pred3 <- forecast(fit3, 3)
+pred3
+
+fit4 <- ets(gdpts)
+fit4
+pred4 <- forecast(fit4, 3)
+pred4
+
+fit5 <- auto.arima(gdpts)
+fit5
+pred5 <- forecast(fit5, 3)
+pred5
+
+accuracy(fit2)
+accuracy(fit3)
+accuracy(fit4)
+accuracy(fit5)
+
+par(mfrow = c(2,2))
+qqnorm(fit2$residuals, main = "ANN")
+qqline(fit2$residuals)
+
+qqnorm(fit3$residuals, main = "AAN")
+qqline(fit3$residuals)
+
+qqnorm(fit4$residuals, main = "MNN")
+qqline(fit4$residuals)
+
+qqnorm(fit5$residuals, main = "ARIMA(0,1,0)")
+qqline(fit5$residuals)
+
+
+mydata <- read_csv("rawdata.csv")[c(1:15), -1]
+predata <- read_csv("rawdata.csv")[c(16:18), -1]
+
+library(BMS)
+bmstry1 <- bms(mydata, burn = 1000, iter = 20000, mprior = "uniform", nmodel = 500)
+pmp.bma(bmstry1)
+
+bmstry2 <- bms(mydata, burn = 1000, iter = 20000, mprior = "fixed", nmodel = 500)
+pmp.bma(bmstry2)
+
+bmstry3 <- bms(mydata, burn = 1000, iter = 20000, mprior = "pip", nmodel = 500)
+pmp.bma(bmstry3)
+
+bmstry4 <- bms(mydata, burn = 1000, iter = 20000, g = "UIP")
+pmp.bma(bmstry4)
+
+bmstry5 <- bms(mydata, burn = 1000, iter = 20000, g = "EBL")
+pmp.bma(bmstry5)
+
+bmstry6 <- bms(mydata, burn = 1000, iter = 20000, g = "hyper")
+pmp.bma(bmstry6)
+
+bmstry <- bms(mydata)
+bmapre <- predict(bmstry, predata)
+bmapre
