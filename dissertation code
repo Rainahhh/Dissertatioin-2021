@@ -2,6 +2,8 @@ set.seed(12345)
 library(readr)
 library(forecast)
 library(MASS)
+library(BMS)
+
 rawdata <- read_csv("rawdata.csv")
 rawdata <- as.data.frame(rawdata)
 
@@ -13,7 +15,7 @@ summary(traindata)
 plot(traindata$Year, traindata$GDP, 
      type = "b", lty = 3, pch = 17,
      xlab = "Year", ylab = "GDP")
-     
+
 
 library(corrplot)
 M <- cor(traindata[, -c(1,2)])
@@ -77,10 +79,10 @@ qqnorm(fit5$residuals, main = "ARIMA(0,1,0)")
 qqline(fit5$residuals)
 
 
+
 mydata <- read_csv("rawdata.csv")[c(1:15), -1]
 predata <- read_csv("rawdata.csv")[c(16:18), -1]
 
-library(BMS)
 bmstry1 <- bms(mydata, burn = 1000, iter = 20000, mprior = "uniform", nmodel = 500)
 pmp.bma(bmstry1)
 
@@ -89,6 +91,8 @@ pmp.bma(bmstry2)
 
 bmstry3 <- bms(mydata, burn = 1000, iter = 20000, mprior = "pip", nmodel = 500)
 pmp.bma(bmstry3)
+
+
 
 bmstry4 <- bms(mydata, burn = 1000, iter = 20000, g = "UIP")
 pmp.bma(bmstry4)
@@ -99,6 +103,9 @@ pmp.bma(bmstry5)
 bmstry6 <- bms(mydata, burn = 1000, iter = 20000, g = "hyper")
 pmp.bma(bmstry6)
 
+
 bmstry <- bms(mydata)
 bmapre <- predict(bmstry, predata)
 bmapre
+
+
